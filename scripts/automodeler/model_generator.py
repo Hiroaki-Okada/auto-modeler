@@ -9,6 +9,7 @@ from automodeler.min_input_generator import MinInputGenerator
 
 
 class ModelGenerator(ReadInput):
+    # comb_label って何だっけ？
     def __init__(self, input_name, comb_label=[]):
         super(ModelGenerator, self).__init__(input_name)
 
@@ -21,20 +22,20 @@ class ModelGenerator(ReadInput):
         self.conf_designer = ConfDesigner(input_name)
         self.min_input_generator = MinInputGenerator(input_name, comb_label=comb_label)
 
-    def run(self, individual):
-        # individualは3通りのパターンがある
-        # 1. 数値のリスト: individual = [1, 2, 3, 4, 5]
-        # 2. 文字列のリスト1 : individual = ['1', '2', '3', '4', '5']
-        # 3. 文字列のリスト2 : individual = ['NH2', 'OCH3', 'H', 'F', 'CN']
-        # 3を基準として1や2だった場合は名前のリストに変換することを考える
-        # 基本的には名前のリストを渡すようにする
+    def run(self, combination):
+        # 変数名を individual から combination に変更
+        '''combination の表現方法には3通りのパターンがある
+        1. 数値のリスト    : combination = [1, 2, 3, 4, 5]
+        2. 文字列のリスト1 : combination = ['1', '2', '3', '4', '5']
+        3. 名前のリスト    : combination = ['NH2', 'OCH3', 'H', 'F', 'CN']
+        3を基準として、1や2だった場合は名前のリスト(name_comb)に変換する'''
         try:
-            individual = [int(i) for i in individual]
-            name_comb = self.get_ini_name_comb(individual)
+            combination = [int(i) for i in combination]
+            name_comb = self.get_ini_name_comb(combination)
         except:
-            name_comb = individual[:]
+            name_comb = combination[:]
 
-        # name_combにはother_componentsも含まれているが, c_name_combはXの要素のみ含まれている
+        # name_comb には other_components も含まれているが, c_name_comb は X 要素のみ含まれている
         c_dir_name, c_name_comb, isDuplicate = self.duplicate_check(name_comb)
 
         # 2021-08-05:条件分岐を変更
@@ -52,10 +53,10 @@ class ModelGenerator(ReadInput):
 
         return c_dir_name, isDuplicate, full_atom_xyz
 
-    def get_ini_name_comb(self, individual):
+    def get_ini_name_comb(self, combination):
         name_comb = []
-        for gene in individual:
-            name = self.num_cand_name_dict[gene]
+        for number in combination:
+            name = self.num_cand_name_dict[number]
             name_comb.append(name)
 
         return name_comb

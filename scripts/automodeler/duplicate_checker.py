@@ -17,10 +17,10 @@ class DuplicateChecker(ReadInput):
         self.name_comb = name_comb
         self.seen = seen
 
-        # name_combには, X以外にもother_componentsの情報が数値やHOEの形式で含まれることがある
-        # しかし, other_componentsの情報はインプットファイルであるread.comには記載されていない
-        # 従って, X以外の要素はモデル分子作成に用いるname_enum_lに組み込まれない
-        # 以上より, other_componentsの有無にかかわらず, automodelerの改良は不要である
+        # name_comb には, X 以外にも other_components の情報が数値や HOE の形式で含まれることがある
+        # しかし, other_components の情報はインプットファイルである read.com には記載されていない
+        # 従って, X 以外の要素はモデル分子作成に用いる name_enum_l に組み込まれない
+        # 以上より, other_components の有無にかかわらず, automodeler の改良は不要である
         self.part_X_name_enum_l = self.get_name_enum(name_comb)
 
         self.dir_name_l = []
@@ -31,9 +31,9 @@ class DuplicateChecker(ReadInput):
         print(self.isDuplicate_l)
 
         if any(self.isDuplicate_l):
-            inx = self.isDuplicate_l.index(True)
-            c_dir_name = self.dir_name_l[inx]
-            c_name_comb = self.name_comb_l[inx]
+            idx = self.isDuplicate_l.index(True)
+            c_dir_name = self.dir_name_l[idx]
+            c_name_comb = self.name_comb_l[idx]
             isDuplicate = True
         else:
             c_dir_name = self.dir_name_l[0]
@@ -46,10 +46,10 @@ class DuplicateChecker(ReadInput):
 
     def get_name_enum(self, name_comb):
         part_X_name_enum_l = []
-        for mode, X_inx in self.part_mode_X_inx_dict.values():
+        for mode, X_idx in self.part_mode_X_inx_dict.values():
             name_l = []
-            for each_X_inx in X_inx:
-                name_l.append(name_comb[each_X_inx])
+            for each_X_idx in X_idx:
+                name_l.append(name_comb[each_X_idx])
 
             each_part_X_name_enum_l = []
             if mode == 'P':
@@ -71,8 +71,8 @@ class DuplicateChecker(ReadInput):
             modify_name_enum = sum(temp_name_enum, [])
 
             new_name_comb = [''] * self.total_X_num
-            for name, dir_inx in zip(modify_name_enum, self.ori_X_dir_inx_rel):
-                new_name_comb[dir_inx] = name
+            for name, dir_idx in zip(modify_name_enum, self.ori_X_dir_inx_rel):
+                new_name_comb[dir_idx] = name
 
             X_num = 1
             dir_name = ''
@@ -106,7 +106,7 @@ class DuplicateChecker(ReadInput):
 
             return
 
-        next_inx = len(temp_name_enum)
-        for name in self.part_X_name_enum_l[next_inx]:
+        next_idx = len(temp_name_enum)
+        for name in self.part_X_name_enum_l[next_idx]:
             # temp_name_enum += [name]
             self.dfs_enumeration(temp_name_enum + [name])
