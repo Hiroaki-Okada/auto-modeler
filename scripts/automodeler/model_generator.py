@@ -4,7 +4,7 @@ import os
 
 from automodeler.input_reader import ReadInput
 from automodeler.duplicate_checker import DuplicateChecker
-from automodeler.conf_designer import ConfDesigner
+from automodeler.conformation_generator import ConformationGenerator
 from automodeler.min_input_generator import MinInputGenerator
 
 
@@ -19,11 +19,10 @@ class ModelGenerator(ReadInput):
             self.comb_label = comb_label
 
         self.duplicate_checker = DuplicateChecker(input_name, comb_label=comb_label)
-        self.conf_designer = ConfDesigner(input_name)
+        self.conformation_generator = ConformationGenerator(input_name)
         self.min_input_generator = MinInputGenerator(input_name, comb_label=comb_label)
 
     def run(self, combination):
-        # 変数名を individual から combination に変更
         '''combination の表現方法には3通りのパターンがある
         1. 数値のリスト    : combination = [1, 2, 3, 4, 5]
         2. 文字列のリスト1 : combination = ['1', '2', '3', '4', '5']
@@ -35,19 +34,20 @@ class ModelGenerator(ReadInput):
         except:
             name_comb = combination[:]
 
-        # name_comb には other_components も含まれているが, c_name_comb は X 要素のみ含まれている
-        c_dir_name, c_name_comb, isDuplicate = self.duplicate_check(name_comb)
+        # name_comb には other_components も含まれている可能性がある(ベイズと連動した場合)が, c_name_comb は X 要素のみ含まれている
+        c_dir_name, c_name_comb, isDuplicate = self.check_duplicate(name_comb)
+
+        # パスはクラス変数にアクセスして読む
+        # dir_path = ReadInput.ground_path + c_dir_name + '/' + self.option_dict['calc_name']
+        dir_path = os.path.join(ReadInput.ground_path, c_dir_name, self.option_dict['calc_name'])
 
         # 2021-08-05:条件分岐を変更
-        # パスはクラス変数にアクセスして読む
-        dir_path = ReadInput.ground_path + c_dir_name + '/' + self.option_dict['calc_name']
-
         # if not isDuplicate:
         if os.path.isdir(dir_path) == False:
-            designed_atom_xyz = self.build_model(c_name_comb)
-            full_atom_xyz = self.model_not_X_atom_xyz + designed_atom_xyz
-            # self.make_min_input(c_dir_name, c_name_comb, designed_atom_xyz)
-            self.make_min_input(c_dir_name, name_comb, designed_atom_xyz)
+            generated_coordinate = self.generate_cartesian_coordinate(c_name_comb)
+            full_atom_xyz = self.model_not_X_atom_xyz + generated_coordinate
+            # self.make_min_input(c_dir_name, c_name_comb, generated_coordinate)
+            self.make_min_input(c_dir_name, name_comb, generated_coordinate)
         else:
             full_atom_xyz = []
 
@@ -61,13 +61,13 @@ class ModelGenerator(ReadInput):
 
         return name_comb
 
-    def duplicate_check(self, name_comb, seen=set()):
+    def check_duplicate(self, name_comb, seen=set()):
         c_dir_name, c_name_comb, isDuplicate = self.duplicate_checker.run(name_comb, seen)
         return c_dir_name, c_name_comb, isDuplicate
 
-    def build_model(self, c_name_comb):
-        designed_atom_xyz = self.conf_designer.run(c_name_comb)
-        return designed_atom_xyz
+    def generate_cartesian_coordinate(self, c_name_comb):
+        generated_coordinate = self.conformation_generator.run(c_name_comb)
+        return generated_coordinate
 
-    def make_min_input(self, c_dir_name, c_name_comb, designed_atom_xyz):
-        self.min_input_generator.run(c_dir_name, c_name_comb, designed_atom_xyz)
+    def make_min_input(self, c_dir_name, c_name_comb, generated_coordinate):
+        self.min_input_generator.run(c_dir_name, c_name_comb, generated_coordinate)

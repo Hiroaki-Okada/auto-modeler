@@ -21,12 +21,16 @@ class DuplicateChecker(ReadInput):
         # しかし, other_components の情報はインプットファイルである read.com には記載されていない
         # 従って, X 以外の要素はモデル分子作成に用いる name_enum_l に組み込まれない
         # 以上より, other_components の有無にかかわらず, automodeler の改良は不要である
+        # 各パートに対して可能な組みあわせを列挙して保存する
         self.part_X_name_enum_l = self.get_name_enum(name_comb)
 
         self.dir_name_l = []
         self.name_comb_l = []
         self.isDuplicate_l = []
 
+        # DFS による全探索で、可能な組み合わせが全列挙される
+        # その中で重複しているものがあるかどうか判定する
+        # 重複していない場合は model_generator の方で座標生成が実行される
         self.dfs_enumeration([])
         print(self.isDuplicate_l)
 
@@ -45,11 +49,17 @@ class DuplicateChecker(ReadInput):
         return c_dir_name, c_name_comb, isDuplicate
 
     def get_name_enum(self, name_comb):
+        """
+        使い方怪しいので再考したい。
+        Pモード : 順列(permitation)列挙。重複を考慮せず、全組み合わせをそのまま生成する。
+        Bモード : 数珠順列(bead)列挙。同一グループの候補名をソートすれば一意に1つの組み合わせに限定できる。
+        Cモード : 組み合わせ(combination)列挙。光学異性体を区別したい時に使う。3つの組み合わせをローテンションさせ、存在するか確認する
+        """
         part_X_name_enum_l = []
         for mode, X_idx in self.part_mode_X_inx_dict.values():
             name_l = []
-            for each_X_idx in X_idx:
-                name_l.append(name_comb[each_X_idx])
+            for idx in X_idx:
+                name_l.append(name_comb[idx])
 
             each_part_X_name_enum_l = []
             if mode == 'P':
@@ -68,38 +78,43 @@ class DuplicateChecker(ReadInput):
 
     def dfs_enumeration(self, temp_name_enum):
         if len(temp_name_enum) == len(self.part_X_name_enum_l):
-            modify_name_enum = sum(temp_name_enum, [])
+            name_enum_l = sum(temp_name_enum, [])
 
             new_name_comb = [''] * self.total_X_num
-            for name, dir_idx in zip(modify_name_enum, self.ori_X_dir_inx_rel):
+            for name, dir_idx in zip(name_enum_l, self.ori_X_dir_inx_rel):
                 new_name_comb[dir_idx] = name
 
             X_num = 1
             dir_name = ''
             while X_num <= self.total_X_num:
-                dir_name += 'X' + str(X_num) + '-' + new_name_comb[X_num - 1]
+                # dir_name += 'X' + str(X_num) + '-' + new_name_comb[X_num - 1]
+                dir_name += 'X{}-{}'.format(X_num, new_name_comb[X_num - 1])
                 if X_num < self.total_X_num:
                     dir_name += '_'
 
                 X_num += 1
 
             # 2022-07-08 : 追加
+            # 数値条件も組み込んで MIN 計算できるように
             other_names = self.name_comb[self.total_X_num:]
             other_labels = self.comb_label[self.total_X_num:]
             if other_names:
                 for name, label in zip(other_names, other_labels):
                     name = str(name)
                     if 'solvent' in label.lower():
-                        dir_name += '_Sol-' + name
+                        # dir_name += '_Sol-' + name
+                        dir_name += f'_Sol-{name}'
                     if 'temperature' in label.lower():
-                        dir_name += '_Temp-' + name
+                        # dir_name += '_Temp-' + name
+                        dir_name += f'Temp-{name}'
 
             self.dir_name_l.append(dir_name)
             self.name_comb_l.append(new_name_comb)
 
             if dir_name in self.seen:
                 self.isDuplicate_l.append(True)
-            elif os.path.isdir('../' + dir_name):
+            # elif os.path.isdir('../' + dir_name):
+            elif os.path.isdir(os.path.join('..', dir_name)):
                 self.isDuplicate_l.append(True)
             else:
                 self.isDuplicate_l.append(False)
@@ -108,5 +123,4 @@ class DuplicateChecker(ReadInput):
 
         next_idx = len(temp_name_enum)
         for name in self.part_X_name_enum_l[next_idx]:
-            # temp_name_enum += [name]
             self.dfs_enumeration(temp_name_enum + [name])
