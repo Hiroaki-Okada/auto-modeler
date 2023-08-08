@@ -19,8 +19,9 @@ class RelocateSubstituent(ReadInput):
         self.n_rotation = N_AxisRotation()
 
     def run(self, c_name_comb):
-        # XYZ軸回り回転を全探索し, 最適な結合方向を持つ配座を取得
+        # XYZ軸周りの回転を全探索し, 最適な結合方向を持つ配座を取得
         best_atom_xyz = [[] for i in range(self.total_X_num)]
+        
         for X_idx in self.sub_mode_X_inx:
             xyz_best_atom_xyz = self.xyz_axis_opt(X_idx, c_name_comb)
             best_atom_xyz[X_idx] = xyz_best_atom_xyz
@@ -32,6 +33,11 @@ class RelocateSubstituent(ReadInput):
                 n_best_atom_xyz = self.n_axis_opt(X_idx, best_atom_xyz)
                 n_best_atom_xyz = [i[:1] + [float(j) for j in i[1:]] for i in n_best_atom_xyz]
                 best_atom_xyz[X_idx] = n_best_atom_xyz
+
+        # for i in sum(best_atom_xyz, []):
+        #     print(' '.join([str(i) for i in i]))
+
+        # pdb.set_trace()
 
         return best_atom_xyz
 

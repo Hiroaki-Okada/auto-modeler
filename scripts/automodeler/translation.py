@@ -13,7 +13,7 @@ element_data = elementdata.ElementData()
 # ここで, 2点を通る直線のベクトル方程式を考える
 # 直線AB上の点Pの位置ベクトルpについて考えると, p = (1-t)*a + t*b (tは媒介変数)
 # これを利用し, まずroot_atomとX_atom間の距離が望みの共有結合半径になるX_atomの座標:pointを求める
-# 続いて, 置換基の代表原子の座標(rep_atom_xyz)とpointの座標差分を求め, 平行移動行列を求める
+# 続いて, 置換基の代表原子の座標(rep_atom_xyz)とpointの座標差分を求め, 平行移動ベクトルを求める
 # この行列を atom_xyzとghost_xyzに作用させれば, 平行移動が完了する
 
 @lru_cache(maxsize=None)
@@ -51,7 +51,7 @@ def translation(root_atom_xyz, X_xyz, atom_xyz, ghost_xyz):
 
     for inx in range(3):
         ghost_xyz[inx] += moving_dist[inx]
-
+        
     atom_xyz = tuple([tuple(i) for i in atom_xyz])
     ghost_xyz = tuple(ghost_xyz)
 
