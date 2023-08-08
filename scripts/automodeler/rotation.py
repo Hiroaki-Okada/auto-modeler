@@ -10,14 +10,10 @@ from automodeler.rotation_matrix import RotationMatrix
 
 
 class OptXYZ():
-    # ベクトル間角度を最小化する回転行列をターゲットに作用させる
+    # 結合角方向の角度誤差を最小化する回転行列を抽出し, ターゲット(置換基)原子群に作用させる
     def minimize_angle(self, angle_l, deg_l, target_xyz, target_atom, rep_xyz):
         min_angle_inx = angle_l.index(min(angle_l))
-
-        optimal_deg = deg_l[min_angle_inx]
-        optimal_deg_x = optimal_deg[0]
-        optimal_deg_y = optimal_deg[1]
-        optimal_deg_z = optimal_deg[2]
+        optimal_deg_x, optimal_deg_y, optimal_deg_z = deg_l[min_angle_inx]
 
         Rx = self.rot_matrix.rot_matrix_x(optimal_deg_x)
         Ry = self.rot_matrix.rot_matrix_y(optimal_deg_y)
@@ -30,7 +26,7 @@ class OptXYZ():
         y_rotated_xyz = self.rotation(Ry, x_rotated_xyz)
         z_rotated_xyz = self.rotation(Rz, y_rotated_xyz)
 
-        # repを元の場所に戻すように再び平行移動
+        # repが元の場所に戻るように再び平行移動
         z_rotated_xyz = np.array(z_rotated_xyz)
         z_rotated_xyz += rep_xyz
 
@@ -39,7 +35,7 @@ class OptXYZ():
 
         return opt_atom_xyz
 
-    def maximize_dist(self, rot_xyz_l, dist_matrix_l, dist_sum_l, target_atom, min_bond_len=3.0):
+    def maximize_dist(self, rot_xyz_l, dist_matrix_l, dist_sum_l, target_atom, min_bond_len=3.0, bond_cnt_thresh=1):
         opt_xyz = []
         while opt_xyz == []:
             max_dist_sum = 0
@@ -47,7 +43,7 @@ class OptXYZ():
                 bond_cnt = np.count_nonzero(dist_matrix <= min_bond_len)
 
                 # 置換基モード : 置換基がroot原子に結合しているのでbond_cnt == 1 は確定
-                #                bond_cnt >= 2の場合は正しくない結合があるので棄却
+                #               bond_cnt >= 2の場合は正しくない結合があるので棄却
                 # 分子モード   : bond_cnt == 0 が基本
 
                 # if bond_cnt >= 2:
@@ -59,12 +55,15 @@ class OptXYZ():
                 # if len(rot_xyz_l) == rot_time ** 3 and bond_cnt >= 1:
                 #     continue
 
-                if bond_cnt >= 1:
+                # 2023-06-08: 追加
+                if bond_cnt >= bond_cnt_thresh:
                     continue
 
                 if dist_sum > max_dist_sum:
                     max_dist_sum = dist_sum
                     opt_xyz = cand_xyz
+
+                # print(min_bond_len, bond_cnt)
 
             min_bond_len -= 0.1
 
@@ -85,7 +84,8 @@ class XYZ_AxisRotation(OptXYZ):
         target_atom = target_atom_xyz[:, 0]
         target_xyz = target_atom_xyz[:, 1:].astype(np.float64)
         rep_xyz = target_xyz[0]
-
+        
+        # frozen_atom_xyz は分子モードで使用する
         if frozen_atom_xyz != ():
             frozen_atom_xyz = np.array(frozen_atom_xyz)
             frozen_xyz = frozen_atom_xyz[:, 1:].astype(np.float64)
@@ -201,7 +201,7 @@ class N_AxisRotation(OptXYZ):
         n_unit_vec = n_vec / np.linalg.norm(n_vec)
 
         rot_xyz_l, dist_matrix_l, dist_sum_l = self.n_rotation(n_unit_vec, target_xyz, rep_xyz, frozen_xyz)
-        opt_atom_xyz = self.maximize_dist(rot_xyz_l, dist_matrix_l, dist_sum_l, target_atom)
+        opt_atom_xyz = self.maximize_dist(rot_xyz_l, dist_matrix_l, dist_sum_l, target_atom, bond_cnt_thresh=2)
 
         # for i in np.array(rot_xyz_l)[:, 1].tolist():
         #     print('H ' + ' '.join([str(j) for j in i]))
