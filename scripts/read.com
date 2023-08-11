@@ -1,9 +1,9 @@
 Options
 calc = MIN
 frozen = True
-submit = False
+submit = True
 machine = karura
-node = ka18
+node = ka20
 END
 
 Model Molecule
