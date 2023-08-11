@@ -1,7 +1,7 @@
 Options
 calc = MIN
 frozen = True
-submit = True
+submit = False
 machine = karura
 node = ka20
 END

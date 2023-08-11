@@ -4,9 +4,10 @@ import os
 import re
 import sys
 import time
+import traceback
 
 from automodeler.input_reader import ReadInput
-from calclysis.base_utils import SubmittJob
+from calclysis.base_utils import SubmitJob
 
 
 class MinInputGenerator(ReadInput):
@@ -21,21 +22,29 @@ class MinInputGenerator(ReadInput):
     def run(self, dir_name, name_comb, opt_atom_xyz):
         # program_path = os.getcwd() + '/'
         # ground_path = program_path + '../'
-
-        dir_path = ReadInput.ground_path + dir_name + '/'
+        # dir_path = ReadInput.ground_path + dir_name + '/'
+        dir_path = os.path.join(ReadInput.ground_path, dir_name)
 
         # ある組み合わせのディレクトリが存在したとしてもRCT,PRD,MINなどで判別が必要
         # RCTなどのディレクトリが存在しているかどうかはmodel_generator.pyで調査済み
         if os.path.isdir(dir_path) == False:
-            os.makedirs(ReadInput.ground_path + dir_name)
+            # os.makedirs(ReadInput.ground_path + dir_name)
+            os.makedirs(dir_path)
 
         # dir_path = ReadInput.ground_path + dir_name + '/'
 
-        os.makedirs(dir_path + self.calc_name)
-        self.calc_path = dir_path + self.calc_name + '/'
+        # os.makedirs(dir_path + self.calc_name)
+        self.calc_path = os.path.join(dir_path, self.calc_name)
+        os.makedirs(self.calc_path)
 
-        self.input_name = dir_name + '_' + self.calc_name
-        self.input_path = self.calc_path + self.input_name
+        # 上で定義したので不要
+        # self.calc_path = dir_path + self.calc_name + '/'
+
+        # self.input_name = dir_name + '_' + self.calc_name
+        # self.input_path = self.calc_path + self.input_name
+
+        self.input_name = '{}_{}'.format(dir_name, self.calc_name)
+        self.input_path = os.path.join(self.calc_path, self.input_name)
 
         # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -44,28 +53,14 @@ class MinInputGenerator(ReadInput):
         if self.option_dict['submit']:
             self.submit()
 
-    def read_input(self):
-        if os.path.exists(self.calc_name + '.com'):
-            min_read = open(self.calc_name + '.com', 'r')
-        else:
-            try:
-                raise FileExistsError('No input file!')
-            except ValueError as e:
-                traceback.print_exc()
-                sys.exit(0)
-
-        min_read_content = min_read.readlines()
-        min_read.close()
-
-        return min_read_content
-
     def make_input(self, dir_name, name_comb, opt_atom_xyz, scrf_type='SMD'):
-        min_read_content = self.read_input()
-        other_label_name_dict = self.get_other(name_comb)
+        com_file_content = self.read_input()
+        others_label_name_dict = self.get_others(name_comb)
 
         isAlreadyRead = False
-        self.min_input = open(self.calc_path + self.input_name + '.com', 'w')
-        for i in min_read_content:
+        # self.min_input = open(self.calc_path + self.input_name + '.com', 'w')
+        self.min_input = open(self.input_path + '.com', 'w')
+        for i in com_file_content:
             if 'Options' in i:
                 isAlreadyRead = True
                 if self.option_dict['frozen']:
@@ -83,31 +78,49 @@ class MinInputGenerator(ReadInput):
                 break
             elif 'Remake' in i:
                 break
-            elif 'solvent' in other_label_name_dict and '#' in i:
+            elif 'solvent' in others_label_name_dict and '#' in i:
                 line = i.rstrip('\n')
-                sol_name = other_label_name_dict['solvent']
-                self.min_input.write(line + ' SCRF=(' + scrf_type + ', Solvent=' + sol_name + ')\n')
+                sol_name = others_label_name_dict['solvent']
+                # self.min_input.write(line + ' SCRF=(' + scrf_type + ', Solvent=' + sol_name + ')\n')
+                self.min_input.write('{} SCRF=({}, Solvent={})\n'.format(line, scrf_type, sol_name))
                 # self.min_input.write(i)
             else:
                 self.min_input.write(i)
 
-        if 'temperature' in other_label_name_dict and isAlreadyRead:
-            self.min_input.write('Temperature=' + other_label_name_dict['temperature'])
+        if 'temperature' in others_label_name_dict and isAlreadyRead:
+            # self.min_input.write('Temperature=' + others_label_name_dict['temperature'])
+            self.min_input.write('Temperature={}'.format(others_label_name_dict['temperature']))
 
         self.min_input.close()
 
+    def read_input(self):
+        com_name = self.calc_name + '.com'
+        if os.path.exists(com_name):
+            com_file = open(com_name, 'r')
+        else:
+            try:
+                raise FileExistsError('No input file!')
+            except FileExistsError as e:
+                traceback.print_exc()
+                sys.exit(0)
+
+        com_file_content = com_file.readlines()
+        com_file.close()
+
+        return com_file_content
+
     # 2022-07-08 : 追加
-    def get_other(self, name_comb):
-        other_names = name_comb[self.total_X_num:]
-        other_labels = self.comb_label[self.total_X_num:]
+    def get_others(self, name_comb):
+        others_names = name_comb[self.total_X_num:]
+        others_labels = self.comb_label[self.total_X_num:]
 
-        other_dict = {}
-        if other_names:
-            for name, label in zip(other_names, other_labels):
+        others_dict = {}
+        if others_names:
+            for name, label in zip(others_names, others_labels):
                 name = str(name)
-                other_dict[label] = name
+                others_dict[label] = name
 
-        return other_dict
+        return others_dict
 
     def write_atom_xyz(self, min_atom_xyz):
         for atom_xyz in min_atom_xyz:
@@ -118,17 +131,17 @@ class MinInputGenerator(ReadInput):
             self.min_input.write(atom + space.join(xyz))
             self.min_input.write('\n')
 
-    def submit(self, machine='karura', node=None, pararrel=1):
+    def submit(self, machine='karura', node=None, parallel=1):
         if self.option_dict['machine']:
             machine = self.option_dict['machine']
         if self.option_dict['node']:
             node = self.option_dict['node']
-        if self.option_dict['pararrel']:
-            pararrel = self.option_dict['pararrel']
+        if self.option_dict['parallel']:
+            parallel = self.option_dict['parallel']
 
-        program_path = os.getcwd() + '/'
+        program_path = os.getcwd()
 
-        submit_job = SubmittJob(machine=machine, node=node,
-                                pararrel=pararrel, program_path=program_path)
+        submit_job = SubmitJob(machine=machine, node=node,
+                               parallel=parallel, program_path=program_path)
 
-        submit_job.submitt(self.calc_path, self.input_name, self.input_path)
+        submit_job.submit(self.calc_path, self.input_path, self.input_name)

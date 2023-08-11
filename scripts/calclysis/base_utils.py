@@ -71,9 +71,9 @@ def write_atom_xyz(c_calc_path, file_name, title_l, atom_xyz_l):
             xyz = ['{:.1000f}'.format(float(k))[:14] for k in xyz]
             space = ' ' * 11
             xyz_file.write(atom + space.join(xyz))
-            xyz_file.write('\n') 
+            xyz_file.write('\n')
 
-        xyz_file.write('\n')         
+        xyz_file.write('\n')
 
     xyz_file.close()
 
@@ -189,16 +189,15 @@ class CheckBondCondition:
 
 import subprocess
 import calclysis.gen_shell
-class SubmittJob:
-    def __init__(self, machine='karura', node=None, pararrel=1, program_path=None):
-        # self.machine = machine
+class SubmitJob:
+    def __init__(self, machine='karura', node=None, parallel=1, program_path=None):
         self.machine = machine.lower()
         self.node = node
-        self.pararrel = pararrel
+        self.parallel = parallel
         self.program_path = program_path
 
     # インスタンス変数化してしまう
-    def submit(self, calc_path, input_name, input_path, gauinput=False):
+    def submit(self, calc_path, input_path, input_name, gauinput=False):
         self.calc_path = calc_path
         self.input_name = input_name
         self.input_path = input_path
@@ -226,21 +225,22 @@ class SubmittJob:
             shell_type = '.tcsh'
         if self.machine == 'karura':
             shell_type = '.sh'
+
         return shell_type
 
     def make_shell(self):
         if self.machine == 'kudpc':
             calclysis.gen_shell.shell_kudpc(self.calc_path, self.input_name,
                                             self.input_path, self.shell_path,
-                                            self.pararrel, self.gauinput)
+                                            self.parallel, self.gauinput)
         if self.machine == 'ims':
             calclysis.gen_shell.shell_ims(self.calc_path, self.input_name,
                                           self.input_path, self.shell_path,
-                                          self.pararrel, self.gauinput)
+                                          self.parallel, self.gauinput)
         if self.machine == 'karura':
             calclysis.gen_shell.shell_karura(self.calc_path, self.input_name,
                                              self.input_path, self.shell_path,
-                                             self.pararrel, self.gauinput)
+                                             self.parallel, self.gauinput)
 
     def get_link(self):
         com_file = open(self.input_path + '.com', 'r')
@@ -255,13 +255,17 @@ class SubmittJob:
 
         return link_name
 
-    # Orcaを使うなら事前にORCA.inpというファイルをインプットファイルのディレクトリに置いておく
+    # Orcaを使うなら事前にinpファイルをインプットファイルのディレクトリに置いておく
     def prepare_link_file(self, link_name):
         if link_name.lower() == 'orca':
-            if os.path.exists(self.program_path + 'ORCA.inp'):
-                shutil.copy(self.program_path + 'ORCA.inp', self.input_path + '.inp')
+            orca_inp_path_1 = os.path.join(self.program_path, 'Orca.inp')
+            orca_inp_path_2 = os.path.join(self.program_path, 'orca.inp')
+            if os.path.exists(orca_inp_path_1):
+                shutil.copy(orca_inp_path_1, self.input_path + '.inp')
+            elif os.path.exists(orca_inp_path_2):
+                shutil.copy(orca_inp_path_2, self.input_path + '.inp')
             else:
-                shutil.copy(self.program_path + 'orca.inp', self.input_path + '.inp')
+                raise FileExistsError('No inp file was found for Orca!\nPrepare Orca.inp or orca.inp please.\n')
 
     def submit_job(self):
         if self.machine == 'kudpc':
@@ -272,20 +276,22 @@ class SubmittJob:
             self.job_karura()
 
         dt_now = datetime.datetime.now()
-        sub_log = open(self.calc_path + 'Submitted.log', 'w')
-        sub_log.write('Submitted on ' + dt_now.strftime('%Y-%m-%d %H:%M:%S'))
+
+        sub_log_path = os.path.join(self.calc_path, 'Submitted.log')
+        sub_log = open(sub_log_path, 'w')
+        sub_log.write('Submitted on {}'.format(dt_now.strftime('%Y-%m-%d %H:%M:%S')))
         sub_log.close()
 
     def job_kudpc(self):
         subprocess.run(['qsub', self.shell_path])
 
     def job_ims(self):
-        return
-        subprocess.run(['jsub', '-q', 'PN', self.shell_path])
+        # subprocess.run(['jsub', '-q', 'PN', self.shell_path])
+        subprocess.run(['jsub', self.shell_path])
 
     def job_karura(self):
         proc_num, _ = calclysis.gen_shell.get_info(self.input_path)
-        core_num = int(proc_num) * int(self.pararrel)
+        core_num = int(proc_num) * int(self.parallel)
         core_num = str(core_num)
 
         if self.node is None or self.node == False:

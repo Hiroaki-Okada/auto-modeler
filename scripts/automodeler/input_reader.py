@@ -42,8 +42,8 @@ def read_options(option_dict, com_content, line_num):
             option_dict['node'] = option_info
         # shellを作成する際に使用する(デフォルト値は1)
         # 内部でstr型に変換されるのでintでもstrでも関係ない
-        if 'pararrel' in option_line:
-            option_dict['pararrel'] = option_info
+        if 'parallel' in option_line:
+            option_dict['parallel'] = option_info
 
         row += 1
 
