@@ -12,7 +12,7 @@ from scipy.spatial import distance
 # element_data = ElementData()
 
 
-# populationは全パターン(all)か名前の組み合わせの形式で渡される
+# population は全パターン(all)か名前の組み合わせの形式で渡される
 # 後者の場合, まずは名前の組み合わせをディレクトリ名へ変換する必要がある
 def get_pop_dirs(population, comb_label=[], total_X_num=0):
     if population == 'all':
@@ -21,7 +21,7 @@ def get_pop_dirs(population, comb_label=[], total_X_num=0):
         dirs = [f for f in files if os.path.isdir(os.path.join(path, f))]
         pop_dirs = [d for d in dirs if 'X1' in d]
     else:
-        # automodeler.duplicate_checker.py内のコードと被っているので統合できるなら統合したい
+        # automodeler.duplicate_checker.py 内のコードと被っているので統合できるなら統合したい
         pop_dirs = []
         for name_comb in population:
             X_num = 1
@@ -80,7 +80,6 @@ def write_atom_xyz(c_calc_path, file_name, title_l, atom_xyz_l):
 
 class CheckBondCondition:
     def run(self, state, atom_xyz):
-        # 2021-06-28追記
         if atom_xyz == []:
             return False
 
@@ -113,8 +112,7 @@ class CheckBondCondition:
             if 'prd bond condition' in com_line:
                 prd_cond_l = self.read_input(bond_cond_content, line_num, prd_cond_l)
 
-        # 仮にbond_condition.comにPRD bond conditionなどが指定されていない場合
-        # そのcond_lは[[]]になるようにする
+        # 仮に bond_condition.com に PRD bond condition などが指定されていない場合, その cond_lは[[]] になるようにする
         if rct_cond_l == []:
             rct_cond_l.append([])
         if ts_cond_l == []:
@@ -142,7 +140,7 @@ class CheckBondCondition:
 
         return cond_l
 
-    # cond_lは最低でも[[]]なので、何もbond conditionをしていない場合は常にTrueが返る
+    # cond_l は最低でも [[]] なので、何も bond condition をしていない場合は常に True が返る
     def check_condition(self, atom_xyz, cond_l):
         isOK = False
         for each_cond_l in cond_l:
@@ -196,7 +194,7 @@ class SubmitJob:
         self.parallel = parallel
         self.program_path = program_path
 
-    # インスタンス変数化してしまう
+    # インスタンス変数化する
     def submit(self, calc_path, input_path, input_name, gauinput=False):
         self.calc_path = calc_path
         self.input_name = input_name
@@ -206,12 +204,12 @@ class SubmitJob:
         shell_type = self.define_shell()
         self.shell_path = self.input_path + shell_type
 
-        # resubmitの場合はシェルを作り直さない
+        # resubmit の場合はシェルを作り直さない
         # オリジナルの並列数が維持される
         if not os.path.exists(self.shell_path):
             self.make_shell()
 
-        # Gaussian以外にlinkしているなら必要なファイルを用意する
+        # Gaussian 以外に link しているなら必要なファイルを用意する
         link_name = self.get_link()
         if link_name != None:
             self.prepare_link_file(link_name)
@@ -255,7 +253,7 @@ class SubmitJob:
 
         return link_name
 
-    # Orcaを使うなら事前にinpファイルをインプットファイルのディレクトリに置いておく
+    # Orca を使うなら事前に inp ファイルをインプットファイルのディレクトリに置いておく
     def prepare_link_file(self, link_name):
         if link_name.lower() == 'orca':
             orca_inp_path_1 = os.path.join(self.program_path, 'Orca.inp')
@@ -295,7 +293,7 @@ class SubmitJob:
         core_num = str(core_num)
 
         if self.node is None or self.node == False:
-            # node = False, Noneのときは全ノード指定
+            # node = False, None のときは全ノード指定
             self.node = 'ka04 ka05 ka06 ka07 ka08 ka09 ka10 ka11 ka12 ka13 ka14 ka15 ka16 ka17 ka18 ka19 ka20'
 
         subprocess.run(['bsub', '-n', core_num, '-q', 'normal',
