@@ -1,6 +1,8 @@
 import pdb
+
 import os
 import shutil
+
 
 def delete_directories_starting_with_x1():
     # 現在のディレクトリを取得
@@ -23,6 +25,7 @@ def delete_directories_starting_with_x1():
                 print(f"削除されました: {target_directory}")
             except OSError as e:
                 print(f"削除エラー: {e}")
+
 
 if __name__ == "__main__":
     delete_directories_starting_with_x1()

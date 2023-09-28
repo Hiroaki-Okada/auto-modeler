@@ -8,13 +8,13 @@ element_data = elementdata.ElementData()
 
 # 本メソッドでは, 置換基を平行移動して化学的に正しい座標に配置する
 # atom_xyz は置換基の座標であり, 現状ではインプットで与えられた座標そのものである
-# これを, 結合元の原子(root_atom)からX_atom方向へ共有結合半径分だけ離れた位置に平行移動する
+# これを, 結合元の原子(root_atom)から X_atom 方向へ共有結合半径分だけ離れた位置に平行移動する
 # また, 置換基を中性化するために加えられている水素原子(ghost_atom)も同様に平行移動しておく
-# ここで, 2点を通る直線のベクトル方程式を考える
-# 直線AB上の点Pの位置ベクトルpについて考えると, p = (1-t)*a + t*b (tは媒介変数)
-# これを利用し, まずroot_atomとX_atom間の距離が望みの共有結合半径になるX_atomの座標:pointを求める
-# 続いて, 置換基の代表原子の座標(rep_atom_xyz)とpointの座標差分を求め, 平行移動ベクトルを求める
-# この行列を atom_xyzとghost_xyzに作用させれば, 平行移動が完了する
+# ここで, 2 点を通る直線のベクトル方程式を考える
+# 直線 AB 上の点 P の位置ベクトル p について考えると, p = (1-t)*a + t*b (t は媒介変数)
+# これを利用し, まず root_atom と X_atom 間の距離が望みの共有結合半径になる X_atom の座標:point を求める
+# 続いて, 置換基の代表原子の座標(rep_atom_xyz)と point の座標差分を求め, 平行移動ベクトルを求める
+# この行列を atom_xyz と ghost_xyz に作用させれば, 平行移動が完了する
 
 @lru_cache(maxsize=None)
 def translation(root_atom_xyz, X_xyz, atom_xyz, ghost_xyz):

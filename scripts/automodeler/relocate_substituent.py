@@ -19,15 +19,15 @@ class RelocateSubstituent(ReadInput):
         self.n_rotation = N_AxisRotation()
 
     def run(self, c_name_comb):
-        # XYZ軸周りの回転を全探索し, 最適な結合方向を持つ配座を取得
+        # XYZ 軸周りの回転を全探索し, 最適な結合方向を持つ配座を取得
         best_atom_xyz = [[] for i in range(self.total_X_num)]
         
         for X_idx in self.sub_mode_X_inx:
             xyz_best_atom_xyz = self.xyz_axis_opt(X_idx, c_name_comb)
             best_atom_xyz[X_idx] = xyz_best_atom_xyz
 
-        # N軸周りの回転を2回ずつ行って立体障害を最小化
-        # # # 2022-07-01 : 何回やっても最終的な結果が同じなので何かおかしい気がする
+        # N 軸周りの回転を 2 回ずつ行って立体障害を最小化
+        # 2022-07-01 : 動作おかしいかもしれない
         for itr in range(2):
             for X_idx in self.sub_mode_X_inx:
                 n_best_atom_xyz = self.n_axis_opt(X_idx, best_atom_xyz)
@@ -36,8 +36,6 @@ class RelocateSubstituent(ReadInput):
 
         # for i in sum(best_atom_xyz, []):
         #     print(' '.join([str(i) for i in i]))
-
-        # pdb.set_trace()
 
         return best_atom_xyz
 

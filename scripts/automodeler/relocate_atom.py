@@ -24,7 +24,7 @@ class RelocateAtom(ReadInput):
             t_name = t_name_atom_xyz[0]
             t_atom_xyz = t_name_atom_xyz[1]
             if t_name == name:
-                # t_atom_xyzは多次元配列なので, 原子名には[0][0]でアクセス
+                # t_atom_xyz は多次元配列なので, 原子名には [0][0] でアクセス
                 atom_name = t_atom_xyz[0][0]
                 break
 

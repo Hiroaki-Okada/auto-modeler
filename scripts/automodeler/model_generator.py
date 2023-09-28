@@ -9,7 +9,7 @@ from automodeler.min_input_generator import MinInputGenerator
 
 
 class ModelGenerator(ReadInput):
-    # comb_label って何だっけ？
+    # comb_label はベイズ最適化と連動する際に利用する
     def __init__(self, input_name, comb_label=[]):
         super(ModelGenerator, self).__init__(input_name)
 
@@ -23,11 +23,11 @@ class ModelGenerator(ReadInput):
         self.min_input_generator = MinInputGenerator(input_name, comb_label=comb_label)
 
     def run(self, combination):
-        '''combination の表現方法には3通りのパターンがある
-        1. 数値のリスト    : combination = [1, 2, 3, 4, 5]
-        2. 文字列のリスト1 : combination = ['1', '2', '3', '4', '5']
-        3. 名前のリスト    : combination = ['NH2', 'OCH3', 'H', 'F', 'CN']
-        3を基準として、1や2だった場合は名前のリスト(name_comb)に変換する'''
+        '''combination の表現方法には 3 パターンある
+        1. 数値のリスト     : combination = [1, 2, 3, 4, 5]
+        2. 文字列のリスト 1 : combination = ['1', '2', '3', '4', '5']
+        3. 名前のリスト     : combination = ['NH2', 'OCH3', 'H', 'F', 'CN']
+        3 を基準として, 1 や 2 だった場合は名前のリスト(name_comb)に変換する'''
         try:
             combination = [int(i) for i in combination]
             name_comb = self.get_ini_name_comb(combination)
@@ -37,11 +37,9 @@ class ModelGenerator(ReadInput):
         # name_comb には other_components も含まれている可能性がある(ベイズと連動した場合)が, c_name_comb は X 要素のみ含まれている
         c_dir_name, c_name_comb, isDuplicate = self.check_duplicate(name_comb)
 
-        # パスはクラス変数にアクセスして読む
-        # dir_path = ReadInput.ground_path + c_dir_name + '/' + self.option_dict['calc_name']
+        # パスはクラス変数から読む
         dir_path = os.path.join(ReadInput.ground_path, c_dir_name, self.option_dict['calc_name'])
 
-        # 2021-08-05:条件分岐を変更
         # if not isDuplicate:
         if os.path.isdir(dir_path) == False:
             generated_coordinate = self.generate_cartesian_coordinate(c_name_comb)

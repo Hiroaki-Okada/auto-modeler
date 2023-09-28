@@ -19,14 +19,14 @@ class OptXYZ():
         Ry = self.rot_matrix.rot_matrix_y(optimal_deg_y)
         Rz = self.rot_matrix.rot_matrix_z(optimal_deg_z)
 
-        # rep周りに回転させるので, repが原点に来るように平行移動しておく
+        # rep 周りに回転させるので, rep が原点に来るように平行移動しておく
         transition_xyz = target_xyz - rep_xyz
 
         x_rotated_xyz = self.rotation(Rx, transition_xyz)
         y_rotated_xyz = self.rotation(Ry, x_rotated_xyz)
         z_rotated_xyz = self.rotation(Rz, y_rotated_xyz)
 
-        # repが元の場所に戻るように再び平行移動
+        # rep が元の場所に戻るように再び平行移動
         z_rotated_xyz = np.array(z_rotated_xyz)
         z_rotated_xyz += rep_xyz
 
@@ -42,20 +42,11 @@ class OptXYZ():
             for cand_xyz, dist_matrix, dist_sum in zip(rot_xyz_l, dist_matrix_l, dist_sum_l):
                 bond_cnt = np.count_nonzero(dist_matrix <= min_bond_len)
 
-                # 置換基モード : 置換基がroot原子に結合しているのでbond_cnt == 1 は確定
-                #               bond_cnt >= 2の場合は正しくない結合があるので棄却
+                # 置換基モード : 置換基が root 原子に結合しているので bond_cnt == 1 は確定
+                #               bond_cnt >= 2 の場合は不適切な結合があるので棄却
                 # 分子モード   : bond_cnt == 0 が基本
 
                 # if bond_cnt >= 2:
-                #     continue
-
-                # rot_time = 360 // self.deg_step
-                # if len(rot_xyz_l) == rot_time and bond_cnt >= 2:
-                #     continue
-                # if len(rot_xyz_l) == rot_time ** 3 and bond_cnt >= 1:
-                #     continue
-
-                # 2023-06-08: 追加
                 if bond_cnt >= bond_cnt_thresh:
                     continue
 
@@ -100,7 +91,7 @@ class XYZ_AxisRotation(OptXYZ):
             angle_l, deg_l = self.get_angle_deg(rot_ghost_xyz_l, root_xyz, rep_xyz)
             opt_atom_xyz = self.minimize_angle(angle_l, deg_l, target_xyz, target_atom, rep_xyz)
 
-            print(len(set(angle_l)), min(angle_l))
+            # print(len(set(angle_l)), min(angle_l))
 
         elif opt_type == 'distance':
             rot_xyz_l = self.xyz_rotation(target_xyz, rep_xyz)
@@ -116,13 +107,13 @@ class XYZ_AxisRotation(OptXYZ):
 
         return rot_xyz
 
-    # 各回転行列を作用させた場合のghost_atomの座標のリストを取得
+    # 各回転行列を作用させた場合の ghost_atom の座標のリストを取得
     def xyz_rotation(self, target_xyz, rep_xyz):
         Rx_l = [self.rot_matrix.rot_matrix_x(deg) for deg in range(0, 360, self.deg_step)]
         Ry_l = [self.rot_matrix.rot_matrix_y(deg) for deg in range(0, 360, self.deg_step)]
         Rz_l = [self.rot_matrix.rot_matrix_z(deg) for deg in range(0, 360, self.deg_step)]
 
-        # rep周りに回転させるので, repが原点に来るようにあらかじめ平行移動しておく
+        # rep 周りに回転させるので, rep が原点に来るように平行移動しておく
         trans_target_xyz = target_xyz - rep_xyz
 
         rot_xyz_l = []
@@ -133,7 +124,7 @@ class XYZ_AxisRotation(OptXYZ):
                 for Rz in Rz_l:
                     z_rotated_xyz = self.rotation(Rz, y_rotated_xyz)
                     z_rotated_xyz = np.array(z_rotated_xyz)
-                    # repが元の位置に戻るように再び平行移動
+                    # rep が元の位置に戻るように再び平行移動
                     z_rotated_xyz += rep_xyz
                     rot_xyz_l.append(z_rotated_xyz)
 
@@ -145,10 +136,10 @@ class XYZ_AxisRotation(OptXYZ):
         itr = -1
         base_num = 360 // self.deg_step
         for xyz in rot_xyz_l:
-            #xyzが二次元配列になっているので一次元配列にする
+            # xyz が二次元配列になっているので一次元配列にする
             xyz = xyz[0]
 
-            # rep-rootベクトルとrep-ghostベクトルのなす角度を記録
+            # rep-root ベクトルと rep-ghost ベクトルのなす角度を記録
             vec1 = root_xyz - rep_xyz
             vec2 = xyz - rep_xyz
             l1 = np.linalg.norm(vec1)
@@ -158,7 +149,7 @@ class XYZ_AxisRotation(OptXYZ):
             theta = np.rad2deg(np.arccos(inner_product / (l1 * l2)))
             angle_l.append(theta)
 
-            # (360 / self.deg_step)進数で考えて角度の組み合わせをO(1)で計算し, 記録
+            # (360 / self.deg_step) 進数で考えて角度の組み合わせを O(1) で計算
             itr += 1
             num = itr
             deg_z = (num % base_num) * self.deg_step
@@ -171,7 +162,7 @@ class XYZ_AxisRotation(OptXYZ):
 
         return angle_l, deg_l
 
-    # 2022-06-30 : 分子モードの時に, 置換基もfrozen_xyzに入ってる？ --> 入ってた
+    # 分子モードのときには置換基も frozen_xyz に入っている
     def get_dist(self, rot_xyz_l, frozen_xyz):
         dist_matrix_l, dist_sum_l = [], []
         for xyz in rot_xyz_l:
@@ -218,14 +209,14 @@ class N_AxisRotation(OptXYZ):
     def n_rotation(self, n_unit_vec, target_xyz, rep_xyz, frozen_xyz):
         Rn_l = [self.rot_matrix.rot_matrix_n(deg, n_unit_vec) for deg in range(0, 360, self.deg_step)]
 
-        # rep周りに回転させるので, repが原点に来るようにあらかじめ平行移動しておく
+        # rep 周りに回転させるので, rep が原点に来るようにあらかじめ平行移動しておく
         trans_xyz = target_xyz - rep_xyz
 
         rot_xyz_l, dist_matrix_l, dist_sum_l = [], [], []
         for Rn in Rn_l:
             rotated_xyz = self.rotation(Rn, trans_xyz)
             rotated_xyz = np.array(rotated_xyz)
-            # repが元の位置に戻るように再び平行移動
+            # rep が元の位置に戻るように再び平行移動
             rotated_xyz += rep_xyz
 
             dist_matrix = cdist(rotated_xyz, frozen_xyz)

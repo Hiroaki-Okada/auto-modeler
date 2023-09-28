@@ -20,33 +20,18 @@ class MinInputGenerator(ReadInput):
             self.calc_name = self.option_dict['calc_name']
 
     def run(self, dir_name, name_comb, opt_atom_xyz):
-        # program_path = os.getcwd() + '/'
-        # ground_path = program_path + '../'
-        # dir_path = ReadInput.ground_path + dir_name + '/'
         dir_path = os.path.join(ReadInput.ground_path, dir_name)
 
-        # ある組み合わせのディレクトリが存在したとしてもRCT,PRD,MINなどで判別が必要
-        # RCTなどのディレクトリが存在しているかどうかはmodel_generator.pyで調査済み
+        # ある組み合わせのディレクトリが存在したとしても RCT, PRD, MIN などで判別が必要
+        # RCT などのディレクトリが存在しているかどうかは model_generator.py で調査済み
         if os.path.isdir(dir_path) == False:
-            # os.makedirs(ReadInput.ground_path + dir_name)
             os.makedirs(dir_path)
 
-        # dir_path = ReadInput.ground_path + dir_name + '/'
-
-        # os.makedirs(dir_path + self.calc_name)
         self.calc_path = os.path.join(dir_path, self.calc_name)
         os.makedirs(self.calc_path)
 
-        # 上で定義したので不要
-        # self.calc_path = dir_path + self.calc_name + '/'
-
-        # self.input_name = dir_name + '_' + self.calc_name
-        # self.input_path = self.calc_path + self.input_name
-
         self.input_name = '{}_{}'.format(dir_name, self.calc_name)
         self.input_path = os.path.join(self.calc_path, self.input_name)
-
-        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
         self.make_input(dir_name, name_comb, opt_atom_xyz)
 
@@ -58,7 +43,6 @@ class MinInputGenerator(ReadInput):
         others_label_name_dict = self.get_others(name_comb)
 
         isAlreadyRead = False
-        # self.min_input = open(self.calc_path + self.input_name + '.com', 'w')
         self.min_input = open(self.input_path + '.com', 'w')
         for i in com_file_content:
             if 'Options' in i:
@@ -81,14 +65,11 @@ class MinInputGenerator(ReadInput):
             elif 'solvent' in others_label_name_dict and '#' in i:
                 line = i.rstrip('\n')
                 sol_name = others_label_name_dict['solvent']
-                # self.min_input.write(line + ' SCRF=(' + scrf_type + ', Solvent=' + sol_name + ')\n')
                 self.min_input.write('{} SCRF=({}, Solvent={})\n'.format(line, scrf_type, sol_name))
-                # self.min_input.write(i)
             else:
                 self.min_input.write(i)
 
         if 'temperature' in others_label_name_dict and isAlreadyRead:
-            # self.min_input.write('Temperature=' + others_label_name_dict['temperature'])
             self.min_input.write('Temperature={}'.format(others_label_name_dict['temperature']))
 
         self.min_input.close()
@@ -99,7 +80,7 @@ class MinInputGenerator(ReadInput):
             com_file = open(com_name, 'r')
         else:
             try:
-                raise FileExistsError('No input file!')
+                raise FileExistsError('No input file for {} calculation!'.format(self.calc_name))
             except FileExistsError as e:
                 traceback.print_exc()
                 sys.exit(0)

@@ -5,7 +5,7 @@ import re
 from collections import defaultdict
 
 
-# インプットから読みこんだ情報はstr型なので, 事前に変換しておく
+# インプットから読みこんだ情報は str 型なので, 事前に変換しておく
 def convert_str(s):
     if s.lower() == 'true':
         return True
@@ -17,31 +17,31 @@ def convert_str(s):
         return s
 
 
-def read_options(option_dict, com_content, line_num):
+def read_options(option_dict, com_file_content, line_num):
     row = 0
-    while 'end' not in com_content[line_num + (row + 1)].lower():
-        option_line = com_content[line_num + (row + 1)].rstrip('\n')
+    while 'end' not in com_file_content[line_num + (row + 1)].lower():
+        option_line = com_file_content[line_num + (row + 1)].rstrip('\n')
         option_line = re.split(r'\s?=\s?', option_line)
         option_info = convert_str(option_line[-1])
 
-        # str型(デフォルトはMIN)
+        # str 型(デフォルトは MIN)
         if 'calc' in option_line:
             option_dict['calc_name'] = option_info
-        # bool値
+        # bool 値
         if 'frozen' in option_line:
             option_dict['frozen'] = option_info
-        # bool値
+        # bool 値
         if 'submit' in option_line:
             option_dict['submit'] = option_info
-        # 文字列で指定(デフォルトはkarura)
+        # 文字列で指定(デフォルトは karura)
         if 'machine' in option_line:
             option_dict['machine'] = option_info
-        # nodeはNoneでもFalseでもOK
+        # node は None でも False でも OK
         # いずれかを指定した場合は全ノードを対象に投入する
         if 'node' in option_line:
             option_dict['node'] = option_info
-        # shellを作成する際に使用する(デフォルト値は1)
-        # 内部でstr型に変換されるのでintでもstrでも関係ない
+        # シェルスクリプトを作成する際に使用する(デフォルト値は 1)
+        # 内部で str に変換されるので int でも str でも良い
         if 'parallel' in option_line:
             option_dict['parallel'] = option_info
 
@@ -51,23 +51,21 @@ def read_options(option_dict, com_content, line_num):
 
 
 class ReadInput(object):
-    # 2021-08-05:追加
-    program_path = os.getcwd() + '/'
-    ground_path = program_path + '../'
+    ground_path = os.path.join(os.getcwd(), '..')
 
     def __init__(self, input_name):
         com_file = open(input_name + '.com', 'r')
-        com_content = com_file.readlines()
-        com_file_len = len(com_content)
+        com_file_content = com_file.readlines()
+        com_file_len = len(com_file_content)
         com_file.close()
 
-        # bool()はFalseを返すので、Falseが初期値となる
+        # bool() は False を返すので, False が初期値となる
         self.option_dict = defaultdict(bool)
         for line_num in range(com_file_len):
-            if 'options' in com_content[line_num].lower():
-                self.option_dict = read_options(self.option_dict, com_content, line_num)
+            if 'options' in com_file_content[line_num].lower():
+                self.option_dict = read_options(self.option_dict, com_file_content, line_num)
 
-            if com_content[line_num] == 'Model Molecule\n':
+            if com_file_content[line_num].lower() == 'model molecule\n':
                 self.model_atom_xyz = []
                 self.model_X_atom_xyz = []
                 self.model_not_X_atom_xyz = []
@@ -88,12 +86,12 @@ class ReadInput(object):
 
                 row = 0
                 X_inx = 0
-                while com_content[line_num + (row + 1)] != 'END\n':
-                    com_line = com_content[line_num + (row + 1)].rstrip('\n')
+                while com_file_content[line_num + (row + 1)] != 'END\n':
+                    com_line = com_file_content[line_num + (row + 1)].rstrip('\n')
                     com_line = re.split(r'\s+', com_line)
 
-                    # perm : Xの並びと, 実際のXの番号を対応付けるリスト
-                    # 一番上のXをX2にしたいならば, permは2にする
+                    # perm : X の並びと, 実際の X の番号を対応付けるリスト
+                    # 一番上の X を X2 にしたいならば, perm は 2 にする
                     atom_xyz = com_line[:4]
                     atom_xyz = [atom_xyz[0]] + [float(i) for i in atom_xyz[1:]]
                     perm = int(com_line[4])
@@ -139,8 +137,6 @@ class ReadInput(object):
                 for mode, X_inx_list in self.part_mode_X_inx_dict.values():
                     self.ori_X_dir_inx_rel += X_inx_list
 
-        # pdb.set_trace()
-
         self.locus_cand_name_atom_xyz = [[] for i in range(self.total_X_num)]
         self.locus_cand_num_list = []
 
@@ -153,20 +149,20 @@ class ReadInput(object):
         line_num = 0
         cand_num = 0
         while line_num < com_file_len:
-            if 'list' in com_content[line_num]:
+            if 'list' in com_file_content[line_num]:
                 sub_inx += 1
 
                 each_locus_cand_num_list = 0
-                while com_content[line_num] != 'END\n':
+                while com_file_content[line_num] != 'END\n':
                     each_locus_cand_num_list += 1
                     each_sub_atom_xyz = []
-                    each_sub_name = com_content[line_num + 1].rstrip('\n')
-                    each_sub_atom_num = com_content[line_num + 2].rstrip('\n')
+                    each_sub_name = com_file_content[line_num + 1].rstrip('\n')
+                    each_sub_atom_num = com_file_content[line_num + 2].rstrip('\n')
                     each_sub_atom_num = int(each_sub_atom_num)
 
                     row = 2
                     for row in range(row, row + each_sub_atom_num):
-                        temp_atom_xyz = com_content[line_num + (row + 1)].rstrip('\n')
+                        temp_atom_xyz = com_file_content[line_num + (row + 1)].rstrip('\n')
                         atom_xyz = re.split(r'\s+', temp_atom_xyz)
                         atom_xyz = [atom_xyz[0]] + [float(i) for i in atom_xyz[1:]]
                         atom_xyz = tuple(atom_xyz)
