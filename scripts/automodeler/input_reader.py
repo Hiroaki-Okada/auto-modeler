@@ -92,6 +92,10 @@ class ReadInput(object):
 
                     # perm : X の並びと, 実際の X の番号を対応付けるリスト
                     # 一番上の X を X2 にしたいならば, perm は 2 にする
+                    # perm : X の並びと, 実際の X の番号を対応付けるリスト
+                    # part : X のグループ番号。同じグループにある X は enum モードに従って重複判定がされうる
+                    # root : X の結合元の原子（分子モードの場合どうなんだっけ)
+                    # X_root : X の元々の並び (?) なんで追加したか思い出せない
                     atom_xyz = com_line[:4]
                     atom_xyz = [atom_xyz[0]] + [float(i) for i in atom_xyz[1:]]
                     perm = int(com_line[4])
